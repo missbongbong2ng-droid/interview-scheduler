@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { TimeSlot, CompanyInfo, AppStep, BookingDetails } from './types';
 import { fetchSlots, bookSlot, fetchConfig } from './services/dataService';
-import { getAIPersonnalizedGreeting } from './services/geminiService';
 import SlotItem from './components/SlotItem';
 import AdminPage from './components/AdminPage';
 
@@ -11,7 +10,6 @@ const App: React.FC = () => {
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [config, setConfig] = useState<CompanyInfo | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const [aiGreeting, setAiGreeting] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [adminPassword, setAdminPassword] = useState<string>("");
@@ -32,7 +30,6 @@ const App: React.FC = () => {
       ]);
       setSlots(fetchedSlots);
       setConfig(fetchedConfig);
-      getAIPersonnalizedGreeting(fetchedConfig).then(setAiGreeting);
     } catch (error) {
       console.error("데이터 로딩 오류:", error);
     } finally {
@@ -156,9 +153,9 @@ const App: React.FC = () => {
             <>
               {step === AppStep.WELCOME && (
                 <div className="space-y-8 animate-in slide-in-from-bottom-4">
-                  <div className="bg-blue-50 p-6 rounded-2xl border-l-4 border-blue-500">
+                  <div className="bg-blue-50 p-6 rounded-2xl border-l-4 border-blue-500 shadow-sm">
                     <p className="text-blue-900 font-medium italic leading-relaxed">
-                      "{aiGreeting || '반갑습니다! 면접 시간을 선택해 주세요.'}"
+                      "{config?.welcomeMessage}"
                     </p>
                   </div>
                   <div className="space-y-3 font-medium text-gray-600">
