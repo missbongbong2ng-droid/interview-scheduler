@@ -16,6 +16,7 @@ export interface CompanyInfo {
   jobTitle: string;
   description: string;
   guidelines: string[];
+  welcomeMessage: string;
 }
 
 export interface BookingDetails {
