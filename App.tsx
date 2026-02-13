@@ -13,11 +13,15 @@ const App: React.FC = () => {
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [aiGreeting, setAiGreeting] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
+  const [adminPassword, setAdminPassword] = useState<string>("");
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: ''
   });
+
+  const ADMIN_PASSWORD = "m231218!";
 
   const loadInitialData = async () => {
     setIsLoading(true);
@@ -41,8 +45,20 @@ const App: React.FC = () => {
   }, []);
 
   const handleCloseAdmin = () => {
-    loadInitialData(); // 최신 데이터 다시 불러오기
-    setStep(AppStep.WELCOME); // 관리자 페이지를 닫고 메인으로 이동
+    loadInitialData();
+    setIsAdminAuthenticated(false);
+    setAdminPassword("");
+    setStep(AppStep.WELCOME);
+  };
+
+  const handleAdminAuth = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminPassword === ADMIN_PASSWORD) {
+      setIsAdminAuthenticated(true);
+    } else {
+      alert("비밀번호가 일치하지 않습니다.");
+      setAdminPassword("");
+    }
   };
 
   const handleBooking = async (e: React.FormEvent) => {
@@ -89,7 +105,13 @@ const App: React.FC = () => {
             <h1 className="text-2xl font-black">{config?.jobTitle} 면접</h1>
           </div>
           <button 
-            onClick={() => setStep(step === AppStep.ADMIN ? AppStep.WELCOME : AppStep.ADMIN)}
+            onClick={() => {
+              if (step === AppStep.ADMIN) {
+                handleCloseAdmin();
+              } else {
+                setStep(AppStep.ADMIN);
+              }
+            }}
             className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition-all"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -101,7 +123,35 @@ const App: React.FC = () => {
 
         <div className="p-8">
           {step === AppStep.ADMIN ? (
-             <AdminPage onClose={handleCloseAdmin} />
+             isAdminAuthenticated ? (
+                <AdminPage onClose={handleCloseAdmin} />
+             ) : (
+                <div className="py-10 space-y-6 animate-in fade-in slide-in-from-top-4">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-xl font-black text-gray-900">관리자 인증</h2>
+                    <p className="text-sm text-gray-400 mt-1 font-medium">운영자 비밀번호를 입력해주세요.</p>
+                  </div>
+                  <form onSubmit={handleAdminAuth} className="space-y-4">
+                    <input 
+                      type="password" 
+                      autoFocus
+                      placeholder="비밀번호 입력" 
+                      value={adminPassword} 
+                      onChange={e => setAdminPassword(e.target.value)}
+                      className="w-full p-4 rounded-xl border-2 border-gray-100 focus:border-blue-500 outline-none text-center font-bold tracking-widest"
+                    />
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setStep(AppStep.WELCOME)} className="flex-1 py-4 bg-gray-50 text-gray-400 font-bold rounded-xl">취소</button>
+                      <button type="submit" className="flex-[2] py-4 bg-gray-900 text-white font-black rounded-xl shadow-lg active:scale-95 transition-all">인증하기</button>
+                    </div>
+                  </form>
+                </div>
+             )
           ) : (
             <>
               {step === AppStep.WELCOME && (
