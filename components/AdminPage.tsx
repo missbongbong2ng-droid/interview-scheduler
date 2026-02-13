@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { TimeSlot, CompanyInfo } from '../types';
 import { fetchSlots, saveSlots, fetchConfig, saveConfig } from '../services/dataService';
+import { generateAIGreeting } from '../services/geminiService';
 
 interface AdminPageProps {
   onClose: () => void;
@@ -11,6 +12,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ onClose }) => {
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [config, setConfig] = useState<CompanyInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [newSlot, setNewSlot] = useState({ date: '', startTime: '' });
 
   useEffect(() => {
@@ -31,6 +33,21 @@ const AdminPage: React.FC<AdminPageProps> = ({ onClose }) => {
       onClose();
     } catch (error) {
       alert('저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleGenerateAI = async () => {
+    if (!config) return;
+    setIsGenerating(true);
+    try {
+      const aiDraft = await generateAIGreeting(config);
+      if (aiDraft) {
+        setConfig({ ...config, welcomeMessage: aiDraft });
+      }
+    } catch (error) {
+      alert('AI 인사말 생성 중 오류가 발생했습니다. API 키 설정을 확인해 주세요.');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -83,14 +100,42 @@ const AdminPage: React.FC<AdminPageProps> = ({ onClose }) => {
           </h3>
           
           <div className="space-y-5">
-            <div>
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 px-1">회사명</label>
-              <input value={config?.name} onChange={e => setConfig({...config!, name: e.target.value})} className="w-full p-4 rounded-xl border-2 border-gray-100 outline-none focus:border-blue-500 font-bold transition-all bg-gray-50/30" />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 px-1">회사명</label>
+                <input value={config?.name} onChange={e => setConfig({...config!, name: e.target.value})} className="w-full p-4 rounded-xl border-2 border-gray-100 outline-none focus:border-blue-500 font-bold transition-all bg-gray-50/30" />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 px-1">모집 직무</label>
+                <input value={config?.jobTitle} onChange={e => setConfig({...config!, jobTitle: e.target.value})} className="w-full p-4 rounded-xl border-2 border-gray-100 outline-none focus:border-blue-500 font-bold transition-all bg-gray-50/30" />
+              </div>
             </div>
-            
+
             <div>
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2 px-1">모집 직무</label>
-              <input value={config?.jobTitle} onChange={e => setConfig({...config!, jobTitle: e.target.value})} className="w-full p-4 rounded-xl border-2 border-gray-100 outline-none focus:border-blue-500 font-bold transition-all bg-gray-50/30" />
+              <div className="flex justify-between items-center mb-2 px-1">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">환영 인사말 (Greeting)</label>
+                <button 
+                  onClick={handleGenerateAI}
+                  disabled={isGenerating}
+                  className={`text-[10px] font-black px-2 py-1 rounded-md transition-all flex items-center gap-1.5 ${isGenerating ? 'bg-gray-100 text-gray-400' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'}`}
+                >
+                  {isGenerating ? (
+                    <div className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  )}
+                  {isGenerating ? 'AI 생성 중...' : 'Gemini AI 추천'}
+                </button>
+              </div>
+              <textarea 
+                value={config?.welcomeMessage} 
+                onChange={e => setConfig({...config!, welcomeMessage: e.target.value})} 
+                rows={4}
+                className="w-full p-4 rounded-xl border-2 border-gray-100 outline-none focus:border-blue-500 font-medium transition-all bg-gray-50/30 text-sm leading-relaxed"
+                placeholder="지원자가 처음 보게 될 환영 메시지를 입력하세요."
+              />
             </div>
 
             <div>
